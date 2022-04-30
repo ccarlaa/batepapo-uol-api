@@ -21,20 +21,31 @@ const nameSchema = joi.object({
         .required()
 })
 
+const messageSchema = joi.object({
+    to: joi.string()
+        .required(),
+    text: joi.string()
+        .required(),
+    type: joi.string()
+        .valid("message", "private_message")
+        .required()
+})
+
 // API 
 
 app.post('/participants', async (req, res) => {
-    const validation = nameSchema.validate({ name: req.body.name });
+    const {name} = req.body
+    const validation = nameSchema.validate({ name: name});
     if(validation.error){
         res.status(422).send("Insira um nome válido");
         return;
     }
     const participant = {
-        name: req.body.name, 
+        name: name, 
         lastStatus: Date.now()
     }
     const online = {
-        from: req.body.name, 
+        from: name, 
         to: 'Todos', 
         text: 'entra na sala...',
         type: 'status',
@@ -43,7 +54,7 @@ app.post('/participants', async (req, res) => {
     try {
         await mongoClient.connect();
         database = mongoClient.db('bate-papo-uol');
-        const contains = await database.collection("participants").findOne({name: req.body.name});
+        const contains = await database.collection("participants").findOne({name: name});
         if(contains){
             res.status(409).send("Já existe um usuário com esse nome. Insira outro");
             return;
@@ -52,7 +63,6 @@ app.post('/participants', async (req, res) => {
         await database.collection("participantsOnline").insertOne(online);
         res.status(201).send('ok');
         mongoClient.close();
-        ;
     }catch (err) {
         res.status(500).send('Erro');
         mongoClient.close();
@@ -60,7 +70,6 @@ app.post('/participants', async (req, res) => {
 })
 
 app.get('/participants', async (req, res) => {
-    console.log("entrei")
     try {
         await mongoClient.connect();
         database = mongoClient.db('bate-papo-uol');
@@ -73,5 +82,37 @@ app.get('/participants', async (req, res) => {
     }
 })
 
+
+app.post('/messages', async (req, res) => {
+    const {to , text, type} = req.body;
+    const user = req.headers.user;
+    const validation = messageSchema.validate({to, text, type});
+    if(validation.error){
+        res.status(422).send("Insira um nome válido");
+        return;
+    }
+    try {
+        await mongoClient.connect();
+        database = mongoClient.db('bate-papo-uol');
+        const message = {
+            to,
+            text,
+            type,
+            from: user,
+            time: dayjs().format("HH:mm:ss")
+        }
+        const isOnline = await database.collection("participants").findOne({name: user});
+        if(!isOnline){
+            res.status(422).send("Você não está mais online");
+            return
+        }
+        await database.collection("messages").insertOne(message);
+        res.status(201).send('ok');
+        mongoClient.close();
+    } catch (err) {
+        res.status(500).send('Erro');
+        mongoClient.close();
+    }
+})
 
 app.listen(5000)
