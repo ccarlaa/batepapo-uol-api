@@ -34,10 +34,11 @@ const messageSchema = joi.object({
 // API 
 
 app.post('/participants', async (req, res) => {
-    const {name} = req.body
+    const {name} = req.body;
     const validation = nameSchema.validate({ name: name});
     if(validation.error){
         res.status(422).send("Insira um nome válido");
+        mongoClient.close();
         return;
     }
     const participant = {
@@ -57,16 +58,16 @@ app.post('/participants', async (req, res) => {
         const contains = await database.collection("participants").findOne({name: name});
         if(contains){
             res.status(409).send("Já existe um usuário com esse nome. Insira outro");
+            mongoClient.close();
             return;
         }
         await database.collection("participants").insertOne(participant);
         await database.collection("participantsOnline").insertOne(online);
         res.status(201).send('ok');
-        mongoClient.close();
     }catch (err) {
         res.status(500).send('Erro');
-        mongoClient.close();
     }
+    mongoClient.close();
 })
 
 app.get('/participants', async (req, res) => {
@@ -75,13 +76,11 @@ app.get('/participants', async (req, res) => {
         database = mongoClient.db('bate-papo-uol');
         const participants = await database.collection("participants").find().toArray(); 
         res.status(200).send(participants);
-        mongoClient.close();
     } catch (err) {
         res.status(500).send('Erro');
-        mongoClient.close();
     }
+    mongoClient.close();
 })
-
 
 app.post('/messages', async (req, res) => {
     const {to , text, type} = req.body;
@@ -89,6 +88,7 @@ app.post('/messages', async (req, res) => {
     const validation = messageSchema.validate({to, text, type});
     if(validation.error){
         res.status(422).send("Insira um nome válido");
+        mongoClient.close();
         return;
     }
     try {
@@ -104,11 +104,37 @@ app.post('/messages', async (req, res) => {
         const isOnline = await database.collection("participants").findOne({name: user});
         if(!isOnline){
             res.status(422).send("Você não está mais online");
-            return
+            mongoClient.close();
+            return;
         }
         await database.collection("messages").insertOne(message);
         res.status(201).send('ok');
-        mongoClient.close();
+    } catch (err) {
+        res.status(500).send('Erro');
+    }
+    mongoClient.close();
+})
+
+app.get('/messages', async (req, res) => {
+    const limit = req.query.limit;
+    const user = req.headers.user;
+    try {
+        await mongoClient.connect();
+        database = mongoClient.db('bate-papo-uol');
+        const messages = await database.collection("messages").find().toArray();
+        const filteredMessages = messages.filter(message => message.from === user || message.to === user || message.to === "Todos" || message.type === 'message');
+        if(limit === undefined){
+            console.log("1")
+            res.status(200).send(filteredMessages);
+        } else {
+            console.log("2")
+            const start = filteredMessages.length - limit;
+            const end = filteredMessages.length
+            const slicedMessages = filteredMessages.slice(start, end);
+            console.log(slicedMessages)
+            res.status(200).send(slicedMessages);
+        }
+        mongoClient.close()
     } catch (err) {
         res.status(500).send('Erro');
         mongoClient.close();
