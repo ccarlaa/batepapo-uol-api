@@ -124,21 +124,37 @@ app.get('/messages', async (req, res) => {
         const messages = await database.collection("messages").find().toArray();
         const filteredMessages = messages.filter(message => message.from === user || message.to === user || message.to === "Todos" || message.type === 'message');
         if(limit === undefined){
-            console.log("1")
             res.status(200).send(filteredMessages);
         } else {
-            console.log("2")
             const start = filteredMessages.length - limit;
             const end = filteredMessages.length
             const slicedMessages = filteredMessages.slice(start, end);
-            console.log(slicedMessages)
             res.status(200).send(slicedMessages);
         }
-        mongoClient.close()
     } catch (err) {
         res.status(500).send('Erro');
-        mongoClient.close();
     }
+    mongoClient.close();
 })
+
+app.post('/status', async (req, res) => {
+    const user = req.headers.user;
+    try{
+        await mongoClient.connect();
+        database = mongoClient.db('bate-papo-uol');
+        const isOnline = await database.collection("participants").findOne({name: user});
+        if(!isOnline){
+            res.status(404).send('O usuário não está online');
+        } else {
+            await db.collection("participants").updateOne({ _id: isOnline._id }, { $set: { lastStatus: Date.now() } });
+            res.status(200).send('ok');
+        }
+    } catch(err){
+        res.status(500).send('Erro');
+    }
+    mongoClient.close();
+})
+
+
 
 app.listen(5000)
