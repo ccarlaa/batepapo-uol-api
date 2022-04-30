@@ -55,6 +55,21 @@ app.post('/participants', async (req, res) => {
         ;
     }catch (err) {
         res.status(500).send('Erro');
+        mongoClient.close();
+    }
+})
+
+app.get('/participants', async (req, res) => {
+    console.log("entrei")
+    try {
+        await mongoClient.connect();
+        database = mongoClient.db('bate-papo-uol');
+        const participants = await database.collection("participants").find().toArray(); 
+        res.status(200).send(participants);
+        mongoClient.close();
+    } catch (err) {
+        res.status(500).send('Erro');
+        mongoClient.close();
     }
 })
 
