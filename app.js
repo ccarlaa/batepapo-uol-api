@@ -14,8 +14,6 @@ app.use(cors());
 const mongoClient = new MongoClient("mongodb://127.0.0.1:27017");
 let database = null;
 
-// VALIDATION
-
 const nameSchema = joi.object({
     name: joi.string()
         .required()
@@ -146,7 +144,7 @@ app.post('/status', async (req, res) => {
         if(!isOnline){
             res.status(404).send('O usuário não está online');
         } else {
-            await db.collection("participants").updateOne({ _id: isOnline._id }, { $set: { lastStatus: Date.now() } });
+            await database.collection("participants").updateOne({ _id: isOnline._id }, { $set: { lastStatus: Date.now() } });
             res.status(200).send('ok');
         }
     } catch(err){
@@ -155,6 +153,26 @@ app.post('/status', async (req, res) => {
     mongoClient.close();
 })
 
+setInterval(async () => {
+    try {
+        await mongoClient.connect();
+        database = mongoClient.db('bate-papo-uol');
+        const participants = await database.collection("participants").find().toArray();
+        for (const participant of participants) {
+            if (Date.now() - participant.lastStatus > 10000) {
+                    await database.collection("participants").deleteOne({ _id: participant._id });
+                    await database.collection("messages").insertOne({
+                    from: participant.name, 
+                    to: "Todos", 
+                    text: "sai da sala...",
+                    type: "status", 
+                    time: dayjs().format("HH:mm:ss") 
+                })
+            }
+        }
+    } catch (error) {
+        console.log("Erro")
+    }
+}, 15000);
 
-
-app.listen(5000)
+app.listen(5000);
