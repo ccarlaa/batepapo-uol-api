@@ -3,15 +3,16 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import joi from "joi";
-import { MongoClient, ObjectId } from "mongodb";
-import { application } from "express";
+import { MongoClient } from "mongodb";
 import dayjs from "dayjs";
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-const mongoClient = new MongoClient("mongodb://127.0.0.1:27017");
+dotenv.config()
+
+const mongoClient = new MongoClient(process.env.MONGO_URL);
 let database = null;
 
 const nameSchema = joi.object({
@@ -28,8 +29,6 @@ const messageSchema = joi.object({
         .valid("message", "private_message")
         .required()
 })
-
-// API 
 
 app.post('/participants', async (req, res) => {
     const {name} = req.body;
