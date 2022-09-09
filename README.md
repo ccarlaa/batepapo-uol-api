@@ -24,13 +24,13 @@ Após baixar o projeto, você pode abri-lo com o Visual Studio Code. Para isso, 
 ```bash
 npm install 
 ```
-
-5. Você  pode rodar o projeto executando:
+5. Rode o MongoDB na sua máquina e atualize o .env com o link do servidor
+6. Execute o projeto com o seguinte comando:
 
 ```bash
 node app.js
 ```
-6. Para testar as requisições utilize o [Thunder Client](https://github.com/rangav/thunder-client-support) e importe
+7. Para testar as requisições utilize o [Thunder Client](https://github.com/rangav/thunder-client-support) e importe
 o arquivo "thunder-collection_bate-papo-uol.json" da pasta "thunder-client".
 
 
