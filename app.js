@@ -174,4 +174,9 @@ setInterval(async () => {
     }
 }, 15000);
 
-app.listen(5000);
+const port = 5000;
+app.listen(port, () => {
+    console.log(`|-----------------------------------|`)
+    console.log(`| Running at http://localhost:${port}  |`)
+    console.log(`|-----------------------------------|`)
+})
