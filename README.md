@@ -2,9 +2,9 @@
 
 ## 📝 Sobre
 
-<p>A aplicação foi feita com o objetivo de atender as requisições feitas pelo projeto [Bate Papo UOL](https://github.com/ccarlaa/bate_papo_uol) ao back-end, além
+A aplicação foi feita com o objetivo de atender as requisições feitas pelo projeto [Bate Papo UOL](https://github.com/ccarlaa/bate_papo_uol) ao back-end, além
 de adquirir experiência com as tecnologias: Node.js, Javascript e MongoDB.
-</p>
+
 
 [![My Skills](https://skills.thijs.gg/icons?i=nodejs,javascript,mongodb&theme=light)](https://skills.thijs.gg)
 
